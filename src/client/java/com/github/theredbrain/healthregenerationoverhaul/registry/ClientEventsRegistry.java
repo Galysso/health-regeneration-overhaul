@@ -4,16 +4,39 @@ import com.github.theredbrain.healthregenerationoverhaul.HealthRegenerationOverh
 import com.github.theredbrain.healthregenerationoverhaul.HealthRegenerationOverhaulClient;
 import com.github.theredbrain.healthregenerationoverhaul.config.ClientConfig;
 import com.github.theredbrain.healthregenerationoverhaul.entity.HealthRegeneratingEntity;
+import com.github.theredbrain.resourcebarapi.ResourceBarAPI;
 import com.github.theredbrain.resourcebarapi.ResourceBarAPIClient;
 import me.fzzyhmstrs.fzzy_config.api.ConfigApi;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
+import org.apache.commons.lang3.tuple.MutablePair;
+
+import java.util.ArrayList;
 
 public class ClientEventsRegistry {
 	private static final String RESOURCE_BAR_IDENTIFIER_STRING = HealthRegenerationOverhaul.MOD_ID + ":health";
+	private static final Identifier ICON_HEALTH_CONTAINER = Identifier.ofVanilla("hud/heart/container");
+	private static final Identifier ICON_HEALTH_CONTAINER_HARDCORE = Identifier.ofVanilla("hud/heart/container_hardcore");
+	private static final Identifier ICON_HEALTH_FULL = Identifier.ofVanilla("hud/heart/full");
+	private static final Identifier ICON_HEALTH_HALF = Identifier.ofVanilla("hud/heart/half");
+	private static final Identifier ICON_HEALTH_FULL_POISONED = Identifier.ofVanilla("hud/heart/poisoned_full");
+	private static final Identifier ICON_HEALTH_HALF_POISONED = Identifier.ofVanilla("hud/heart/poisoned_half");
+	private static final Identifier ICON_HEALTH_FULL_WITHERED = Identifier.ofVanilla("hud/heart/withered_full");
+	private static final Identifier ICON_HEALTH_HALF_WITHERED = Identifier.ofVanilla("hud/heart/withered_half");
+	private static final Identifier ICON_HEALTH_FULL_FROZEN = Identifier.ofVanilla("hud/heart/frozen_full");
+	private static final Identifier ICON_HEALTH_HALF_FROZEN = Identifier.ofVanilla("hud/heart/frozen_half");
+	private static final Identifier ICON_HEALTH_FULL_HARDCORE = Identifier.ofVanilla("hud/heart/hardcore_full");
+	private static final Identifier ICON_HEALTH_HALF_HARDCORE = Identifier.ofVanilla("hud/heart/hardcore_half");
+	private static final Identifier ICON_HEALTH_FULL_POISONED_HARDCORE = Identifier.ofVanilla("hud/heart/poisoned_hardcore_full");
+	private static final Identifier ICON_HEALTH_HALF_POISONED_HARDCORE = Identifier.ofVanilla("hud/heart/poisoned_hardcore_half");
+	private static final Identifier ICON_HEALTH_FULL_WITHERED_HARDCORE = Identifier.ofVanilla("hud/heart/withered_hardcore_full");
+	private static final Identifier ICON_HEALTH_HALF_WITHERED_HARDCORE = Identifier.ofVanilla("hud/heart/withered_hardcore_half");
+	private static final Identifier ICON_HEALTH_FULL_FROZEN_HARDCORE = Identifier.ofVanilla("hud/heart/frozen_hardcore_full");
+	private static final Identifier ICON_HEALTH_HALF_FROZEN_HARDCORE = Identifier.ofVanilla("hud/heart/frozen_hardcore_half");
 
 	public static void initializeClientEvents() {
 		HudRenderCallback.EVENT.register((matrixStack, delta) -> {
@@ -21,90 +44,166 @@ public class ClientEventsRegistry {
 			PlayerEntity playerEntity = minecraftClient.player;
 			ClientConfig clientConfig = HealthRegenerationOverhaulClient.CLIENT_CONFIG;
 
-			if (playerEntity != null) {
+			if (playerEntity != null && !minecraftClient.options.hudHidden && clientConfig.enable_alternative_health_bar) {
 				double health = playerEntity.getHealth();
 				double maxHealth = playerEntity.getMaxHealth();
+				double unreservedHealth = MathHelper.ceil(((HealthRegeneratingEntity) playerEntity).healthregenerationoverhaul$getUnreservedHealth());
 
-				ResourceBarAPIClient.drawResourceBar(
-						minecraftClient,
-						minecraftClient.textRenderer,
-						matrixStack,
-						RESOURCE_BAR_IDENTIFIER_STRING,
-						new double[]{
-								-1,
-								-1,
-								0,
-								-91,
-								-45,
-								5,
-								182,
-								5,
-								182,
-								5,
-								182,
-								5,
-								5,
-								0,
-								0
-						},
-						new Identifier[]{
-								Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_background.png"),
-								Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress_decrease_animation.png"),
-								Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress_increase_animation.png"),
-								Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress_increase_value.png"),
-								Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress.png"),
-								Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_reserved.png"),
-								Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_overlay.png"),
-								null
-						},
-						clientConfig.enable_alternative_health_bar && maxHealth > 0 && (health < maxHealth || clientConfig.show_full_health_bar) && !playerEntity.isCreative(),
-						health,
-						maxHealth,
-						MathHelper.ceil(((HealthRegeneratingEntity) playerEntity).healthregenerationoverhaul$getRegeneratedHealth()),
-						MathHelper.ceil(((HealthRegeneratingEntity) playerEntity).healthregenerationoverhaul$getUnreservedHealth()),
-						clientConfig.positionSettings.origin,
-						clientConfig.positionSettings.offsets_x,
-						clientConfig.positionSettings.offsets_y,
-						0,
-						0,
-						clientConfig.fill_direction,
-						clientConfig.textureSettings.backgroundTextureSettings.texture_heights,
-						clientConfig.textureSettings.backgroundTextureSettings.texture_widths,
-						clientConfig.textureSettings.backgroundTextureSettings.texture_ids,
-						clientConfig.textureSettings.progressTextureSettings.offset_x,
-						clientConfig.textureSettings.progressTextureSettings.offset_y,
-						clientConfig.textureSettings.progressTextureSettings.texture_heights,
-						clientConfig.textureSettings.progressTextureSettings.texture_widths,
-						clientConfig.textureSettings.progressTextureSettings.progress_decrease_animation_texture_ids,
-						clientConfig.textureSettings.progressTextureSettings.progress_increase_animation_texture_ids,
-						clientConfig.textureSettings.progressTextureSettings.progress_increase_value_texture_ids,
-						clientConfig.textureSettings.progressTextureSettings.progress_texture_ids,
-						clientConfig.textureSettings.reservedTextureSettings.offset_x,
-						clientConfig.textureSettings.reservedTextureSettings.offset_y,
-						clientConfig.textureSettings.reservedTextureSettings.texture_heights,
-						clientConfig.textureSettings.reservedTextureSettings.texture_widths,
-						clientConfig.textureSettings.reservedTextureSettings.texture_ids,
-						clientConfig.show_current_value_overlay,
-						clientConfig.textureSettings.overlayTextureSettings.offset_x,
-						clientConfig.textureSettings.overlayTextureSettings.offset_y,
-						clientConfig.textureSettings.overlayTextureSettings.texture_heights,
-						clientConfig.textureSettings.overlayTextureSettings.texture_widths,
-						clientConfig.textureSettings.overlayTextureSettings.texture_ids,
-						clientConfig.show_icon && maxHealth > 0,
-						clientConfig.iconTextureSettings.offset_x,
-						clientConfig.iconTextureSettings.offset_y,
-						clientConfig.iconTextureSettings.texture_heights,
-						clientConfig.iconTextureSettings.texture_widths,
-						clientConfig.iconTextureSettings.texture_ids,
-						clientConfig.enable_smooth_animation,
-						clientConfig.animationSettings.animation_interval,
-						clientConfig.animationSettings.max_value_change_is_animated,
-						clientConfig.show_number && maxHealth > 0 && (health < maxHealth || clientConfig.numberSettings.show_when_health_full),
-						clientConfig.numberSettings.show_max_value,
-						clientConfig.numberSettings.offset_x,
-						clientConfig.numberSettings.offset_y,
-						clientConfig.numberSettings.color.toInt()
-				);
+				if (!playerEntity.isCreative() && maxHealth > 0) {
+
+					MutablePair<Integer, Integer> originPos = ResourceBarAPIClient.getOriginPos(matrixStack, clientConfig.origin);
+
+					if (clientConfig.health_bar_display == ResourceBarAPI.ResourceBarDisplay.ICON && (health < maxHealth || clientConfig.show_full_health_bar)) {
+
+						Identifier containerId;
+						Identifier fullId;
+						Identifier halfId;
+
+						if (playerEntity.getWorld().getLevelProperties().isHardcore()) {
+							containerId = ICON_HEALTH_CONTAINER_HARDCORE;
+							if (playerEntity.hasStatusEffect(StatusEffects.POISON)) {
+								fullId = ICON_HEALTH_FULL_POISONED_HARDCORE;
+								halfId = ICON_HEALTH_HALF_POISONED_HARDCORE;
+							} else if (playerEntity.hasStatusEffect(StatusEffects.WITHER)) {
+								fullId = ICON_HEALTH_FULL_WITHERED_HARDCORE;
+								halfId = ICON_HEALTH_HALF_WITHERED_HARDCORE;
+							} else if (playerEntity.isFrozen()) {
+								fullId = ICON_HEALTH_FULL_FROZEN_HARDCORE;
+								halfId = ICON_HEALTH_HALF_FROZEN_HARDCORE;
+							} else {
+								fullId = ICON_HEALTH_FULL_HARDCORE;
+								halfId = ICON_HEALTH_HALF_HARDCORE;
+							}
+						} else {
+							containerId = ICON_HEALTH_CONTAINER;
+							if (playerEntity.hasStatusEffect(StatusEffects.POISON)) {
+								fullId = ICON_HEALTH_FULL_POISONED;
+								halfId = ICON_HEALTH_HALF_POISONED;
+							} else if (playerEntity.hasStatusEffect(StatusEffects.WITHER)) {
+								fullId = ICON_HEALTH_FULL_WITHERED;
+								halfId = ICON_HEALTH_HALF_WITHERED;
+							} else if (playerEntity.isFrozen()) {
+								fullId = ICON_HEALTH_FULL_FROZEN;
+								halfId = ICON_HEALTH_HALF_FROZEN;
+							} else {
+								fullId = ICON_HEALTH_FULL;
+								halfId = ICON_HEALTH_HALF;
+							}
+						}
+
+						ResourceBarAPIClient.drawIconResourceBar(
+								minecraftClient,
+								matrixStack,
+								RESOURCE_BAR_IDENTIFIER_STRING,
+								health,
+								maxHealth,
+								containerId,
+								fullId,
+								halfId,
+								new ArrayList<>(),
+								new ArrayList<>(),// TODO reserved health, absorption
+								originPos.getLeft(),
+								originPos.getRight(),
+								clientConfig.iconBarSettings.offset_x.get(),
+								clientConfig.iconBarSettings.offset_y.get(),
+								clientConfig.fill_direction,
+								clientConfig.iconBarSettings.reverse_stack_direction.get(),
+								clientConfig.iconBarSettings.max_icon_amount_per_bar.get()
+						);
+					} else if (clientConfig.health_bar_display == ResourceBarAPI.ResourceBarDisplay.SMOOTH && (health < maxHealth || clientConfig.show_full_health_bar)) {
+					ResourceBarAPIClient.drawSmoothResourceBar(
+							minecraftClient,
+							matrixStack,
+							RESOURCE_BAR_IDENTIFIER_STRING,
+							new double[]{
+									-1,
+									-1,
+									0,
+									-91,
+									-45,
+									5,
+									182,
+									5,
+									182,
+									5,
+									182,
+									5,
+									5,
+									0,
+									0
+							},
+							new Identifier[]{
+									Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_background.png"),
+									Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress_decrease_animation.png"),
+									Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress_increase_animation.png"),
+									Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress_increase_value.png"),
+									Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_progress.png"),
+									Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_reserved.png"),
+									Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_health_overlay.png"),
+									null
+							},
+							health,
+							maxHealth,
+							MathHelper.ceil(((HealthRegeneratingEntity) playerEntity).healthregenerationoverhaul$getRegeneratedHealth()),
+							unreservedHealth,
+							originPos.getLeft(),
+							originPos.getRight(),
+							clientConfig.smoothBarSettings.positionSettings.offsets_x,
+							clientConfig.smoothBarSettings.positionSettings.offsets_y,
+							0,
+							0,
+							clientConfig.fill_direction,
+							clientConfig.smoothBarSettings.textureSettings.backgroundTextureSettings.texture_heights,
+							clientConfig.smoothBarSettings.textureSettings.backgroundTextureSettings.texture_widths,
+							clientConfig.smoothBarSettings.textureSettings.backgroundTextureSettings.texture_ids,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.offset_x,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.offset_y,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.texture_heights,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.texture_widths,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.progress_decrease_animation_texture_ids,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.progress_increase_animation_texture_ids,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.progress_increase_value_texture_ids,
+							clientConfig.smoothBarSettings.textureSettings.progressTextureSettings.progress_texture_ids,
+							clientConfig.smoothBarSettings.textureSettings.reservedTextureSettings.offset_x,
+							clientConfig.smoothBarSettings.textureSettings.reservedTextureSettings.offset_y,
+							clientConfig.smoothBarSettings.textureSettings.reservedTextureSettings.texture_heights,
+							clientConfig.smoothBarSettings.textureSettings.reservedTextureSettings.texture_widths,
+							clientConfig.smoothBarSettings.textureSettings.reservedTextureSettings.texture_ids,
+							clientConfig.smoothBarSettings.show_current_value_overlay,
+							clientConfig.smoothBarSettings.textureSettings.overlayTextureSettings.offset_x,
+							clientConfig.smoothBarSettings.textureSettings.overlayTextureSettings.offset_y,
+							clientConfig.smoothBarSettings.textureSettings.overlayTextureSettings.texture_heights,
+							clientConfig.smoothBarSettings.textureSettings.overlayTextureSettings.texture_widths,
+							clientConfig.smoothBarSettings.textureSettings.overlayTextureSettings.texture_ids,
+							clientConfig.smoothBarSettings.show_icon,
+							clientConfig.smoothBarSettings.iconTextureSettings.offset_x,
+							clientConfig.smoothBarSettings.iconTextureSettings.offset_y,
+							clientConfig.smoothBarSettings.iconTextureSettings.texture_heights,
+							clientConfig.smoothBarSettings.iconTextureSettings.texture_widths,
+							clientConfig.smoothBarSettings.iconTextureSettings.texture_ids,
+							clientConfig.smoothBarSettings.enable_smooth_animation,
+							clientConfig.smoothBarSettings.animationSettings.animation_interval,
+							clientConfig.smoothBarSettings.animationSettings.max_value_change_is_animated
+					);
+					}
+					if (clientConfig.numberSettings.show_number && (health < maxHealth || clientConfig.show_full_health_bar)) {
+						ResourceBarAPIClient.drawResourceNumber(
+								minecraftClient,
+								minecraftClient.textRenderer,
+								matrixStack,
+								RESOURCE_BAR_IDENTIFIER_STRING,
+								health,
+								maxHealth,
+								unreservedHealth,
+								originPos.getLeft(),
+								originPos.getRight(),
+								clientConfig.numberSettings.show_max_value,
+								clientConfig.numberSettings.offset_x,
+								clientConfig.numberSettings.offset_y,
+								clientConfig.numberSettings.color.toInt()
+						);
+					}
+				}
 			}
 		});
 		ConfigApi.event().onUpdateClient((identifier, config) -> {

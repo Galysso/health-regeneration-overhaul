@@ -1,3 +1,10 @@
+# 2.5.0
+
+- added alternative health bar consisting of icons, similar to vanillas health bar (this first iteration does not yet support multiple icon types per bar, e.g. absorption hearts)
+- reworked the "naturalRegeneration" game rule (now works with mods that display attribute values)
+- fixed an issue where the alternative health bar was visible in creative mode
+- fixed an issue where the alternative health bar was visible even when the HUD was hidden (pressing F1)
+
 # 2.4.1
 
 - fixed an issue where the regeneration delay after taking damage was not applied correctly

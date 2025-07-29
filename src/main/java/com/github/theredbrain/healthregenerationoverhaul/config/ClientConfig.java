@@ -8,6 +8,7 @@ import me.fzzyhmstrs.fzzy_config.config.Config;
 import me.fzzyhmstrs.fzzy_config.config.ConfigSection;
 import me.fzzyhmstrs.fzzy_config.validation.collection.ValidatedMap;
 import me.fzzyhmstrs.fzzy_config.validation.minecraft.ValidatedIdentifier;
+import me.fzzyhmstrs.fzzy_config.validation.misc.ValidatedBoolean;
 import me.fzzyhmstrs.fzzy_config.validation.misc.ValidatedColor;
 import me.fzzyhmstrs.fzzy_config.validation.number.ValidatedInt;
 import net.minecraft.util.Identifier;
@@ -22,13 +23,29 @@ public class ClientConfig extends Config {
 	}
 
 	public boolean enable_alternative_health_bar = true;
+	public ResourceBarAPI.ResourceBarDisplay health_bar_display = ResourceBarAPI.ResourceBarDisplay.ICON;
 	public boolean show_full_health_bar = true;
+
+	public ResourceBarAPI.ResourceBarOrigin origin = ResourceBarAPI.ResourceBarOrigin.BOTTOM_MIDDLE;
+
+	public ResourceBarAPI.ResourceBarFillDirection fill_direction = ResourceBarAPI.ResourceBarFillDirection.LEFT_TO_RIGHT;
+
+	public IconBarSettings iconBarSettings = new IconBarSettings();
+
+	public static class IconBarSettings extends ConfigSection {
+		public ValidatedInt offset_x = new ValidatedInt(91);
+		public ValidatedInt offset_y = new ValidatedInt(-49);
+		public ValidatedInt max_icon_amount_per_bar = new ValidatedInt(10);
+		public ValidatedBoolean reverse_stack_direction = new ValidatedBoolean(true);
+	}
+
+	public SmoothBarSettings smoothBarSettings = new SmoothBarSettings();
+
+	public static class SmoothBarSettings extends ConfigSection {
 
 	public PositionSettings positionSettings = new PositionSettings();
 
 	public static class PositionSettings extends ConfigSection {
-		public ResourceBarAPI.ResourceBarOrigin origin = ResourceBarAPI.ResourceBarOrigin.BOTTOM_MIDDLE;
-		public boolean is_centered = false;
 		public ValidatedMap<Integer, Integer> offsets_x = new ValidatedMap<>(new HashMap<>() {{
 			put(0, -91);
 		}}, new ValidatedInt(), new ValidatedInt());
@@ -36,8 +53,6 @@ public class ClientConfig extends Config {
 			put(0, -39);
 		}}, new ValidatedInt(), new ValidatedInt());
 	}
-
-	public ResourceBarAPI.ResourceBarFillDirection fill_direction = ResourceBarAPI.ResourceBarFillDirection.LEFT_TO_RIGHT;
 
 	public boolean show_current_value_overlay = false;
 
@@ -161,7 +176,6 @@ public class ClientConfig extends Config {
 
 		public ValidatedMap<Integer, Identifier> texture_ids = new ValidatedMap<>(new HashMap<>() {
 		}, new ValidatedInt(), new ValidatedIdentifier());
-
 	}
 
 	public boolean enable_smooth_animation = true;
@@ -172,12 +186,12 @@ public class ClientConfig extends Config {
 		public int animation_interval = 1;
 		public boolean max_value_change_is_animated = false;
 	}
-
-	public boolean show_number = false;
+}
 
 	public NumberSettings numberSettings = new NumberSettings();
 
 	public static class NumberSettings extends ConfigSection {
+		public boolean show_number = false;
 		public boolean show_max_value = false;
 		public boolean show_when_health_full = true;
 		public int offset_x = 0;
