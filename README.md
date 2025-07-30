@@ -24,7 +24,7 @@ When health is reduced, regeneration is stopped for **_generic.health_regenerati
 
 ## Customization
 
-When the vanilla gamerule "naturalRegeneration" is true, players have 1 additional health regeneration.
+When the vanilla game rule "naturalRegeneration" is true, players have 1 additional health regeneration.
 
 In the client config an alternative health bar can be enabled and customized.
 
