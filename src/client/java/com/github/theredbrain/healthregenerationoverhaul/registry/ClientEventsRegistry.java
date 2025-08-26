@@ -63,7 +63,7 @@ public class ClientEventsRegistry {
                 if (prevAbsorptionLevel < 0.0) {
                     prevAbsorptionLevel = absorption;
                 }
-                int regeneratedAbsorption = (int)Math.ceil(Math.max(0.0, absorption - prevAbsorptionLevel));
+                int deltaAbsorption = (int)Math.ceil(Math.max(0.0, absorption - prevAbsorptionLevel));
                 prevAbsorptionLevel = absorption;
 
 				if (!playerEntity.isCreative() && maxHealth > 0) {
@@ -224,12 +224,6 @@ public class ClientEventsRegistry {
                             && (absorption > 0.0 || clientConfig.show_full_absorption_bar)) {
                         double absorptionMaxForBar = maxHealth;
 
-                        if (prevAbsorptionLevel < 0.0) {
-                            prevAbsorptionLevel = absorption;
-                        }
-                        int deltaAbsorption = (int) Math.ceil(Math.max(0.0, absorption - prevAbsorptionLevel));
-                        prevAbsorptionLevel = absorption;
-
                         if (clientConfig.absorption_bar_display == ResourceBarAPI.ResourceBarDisplay.ICON
                                 && (absorption < absorptionMaxForBar || clientConfig.show_full_absorption_bar)) {
 
@@ -255,7 +249,7 @@ public class ClientEventsRegistry {
                                     fullAbs,
                                     halfAbs,
                                     new ArrayList<>(),
-                                    new ArrayList<>(), // pas de "reserved" sur absorption
+                                    new ArrayList<>(),
                                     originPos.getLeft(),
                                     originPos.getRight(),
                                     clientConfig.absorptionIconSettings.offset_x.get(),
@@ -285,10 +279,10 @@ public class ClientEventsRegistry {
                                             Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_overlay.png"),
                                             null
                                     },
-                                    absorption,                // current
-                                    absorptionMaxForBar,       // max (indexé sur la vie)
-                                    regeneratedAbsorption,     // <<< clé: delta positif pour l’animation d’augmentation
-                                    absorption,                // unreserved (pas de "reserved" réel pour l’absorption)
+                                    absorption,
+                                    absorptionMaxForBar,
+                                    deltaAbsorption,
+                                    absorption,
                                     originPos.getLeft(),
                                     originPos.getRight(),
                                     clientConfig.absorptionSmoothSettings.positionSettings.offsets_x,
@@ -340,7 +334,7 @@ public class ClientEventsRegistry {
                                     ABSORPTION_BAR_IDENTIFIER_STRING,
                                     absorption,
                                     absorptionMaxForBar,
-                                    absorption, // non-réservé (tout absorption)
+                                    absorption,
                                     originPos.getLeft(),
                                     originPos.getRight(),
                                     clientConfig.absorptionNumberSettings.show_max_value,
