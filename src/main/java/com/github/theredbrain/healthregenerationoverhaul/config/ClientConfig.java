@@ -198,4 +198,135 @@ public class ClientConfig extends Config {
 		public int offset_y = -40;
 		public ValidatedColor color = new ValidatedColor(150, 150, 150);
 	}
+
+    // Active/désactive la barre d’absorption alternative
+    public boolean enable_alternative_absorption_bar = true;
+
+    // Affichage de la barre d’absorption (ICON ou SMOOTH), indépendant de la santé
+    public ResourceBarAPI.ResourceBarDisplay absorption_bar_display = ResourceBarAPI.ResourceBarDisplay.SMOOTH;
+
+    // Afficher la barre d’absorption même lorsqu’elle est “pleine”
+    public boolean show_full_absorption_bar = true;
+
+    // Direction de remplissage indépendante
+    public ResourceBarAPI.ResourceBarFillDirection absorption_fill_direction = ResourceBarAPI.ResourceBarFillDirection.LEFT_TO_RIGHT;
+
+    // Section icônes pour l’absorption (offsets par défaut: juste en dessous de la barre de coeurs icônes)
+    public IconBarSettings absorptionIconSettings = new IconBarSettings() {{
+        offset_x = new ValidatedInt(91);
+        offset_y = new ValidatedInt(-39); // 10px sous la barre de santé icônes
+        max_icon_amount_per_bar = new ValidatedInt(10);
+        reverse_stack_direction = new ValidatedBoolean(true);
+    }};
+
+    // Section lisse pour l’absorption
+    public SmoothBarSettings absorptionSmoothSettings = new SmoothBarSettings() {{
+        // Position: légèrement décalée par rapport à la barre de santé lisse
+        positionSettings = new PositionSettings() {{
+            offsets_x = new ValidatedMap<>(new HashMap<>() {{
+                put(0, -91);
+            }}, new ValidatedInt(), new ValidatedInt());
+            offsets_y = new ValidatedMap<>(new HashMap<>() {{
+                put(0, -33); // un peu plus haut/bas que la santé (selon ton HUD)
+            }}, new ValidatedInt(), new ValidatedInt());
+        }};
+
+        // On peut afficher un overlay si désiré (par défaut false)
+        show_current_value_overlay = false;
+
+        // Textures dédiées à l’absorption (à fournir dans ton pack)
+        textureSettings = new TextureSettings() {{
+            backgroundTextureSettings = new BackgroundTextureSettings() {{
+                texture_heights = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 5);
+                }}, new ValidatedInt(), new ValidatedInt());
+                texture_widths = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 182);
+                }}, new ValidatedInt(), new ValidatedInt());
+                texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_background.png"));
+                }}, new ValidatedInt(), new ValidatedIdentifier());
+            }};
+            progressTextureSettings = new ProgressTextureSettings() {{
+                offset_x = 0;
+                offset_y = 0;
+                texture_heights = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 5);
+                }}, new ValidatedInt(), new ValidatedInt());
+                texture_widths = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 182);
+                }}, new ValidatedInt(), new ValidatedInt());
+                progress_decrease_animation_texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_decrease_animation.png"));
+                }}, new ValidatedInt(), new ValidatedIdentifier());
+                progress_increase_animation_texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_increase_animation.png"));
+                }}, new ValidatedInt(), new ValidatedIdentifier());
+                progress_increase_value_texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_increase_value.png"));
+                }}, new ValidatedInt(), new ValidatedIdentifier());
+                progress_texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress.png"));
+                }}, new ValidatedInt(), new ValidatedIdentifier());
+            }};
+            reservedTextureSettings = new ReservedTextureSettings() {{
+                offset_x = 0;
+                offset_y = 0;
+                texture_heights = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 5);
+                }}, new ValidatedInt(), new ValidatedInt());
+                texture_widths = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 182);
+                }}, new ValidatedInt(), new ValidatedInt());
+                texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_reserved.png"));
+                }}, new ValidatedInt(), new ValidatedIdentifier());
+            }};
+            overlayTextureSettings = new OverlayTextureSettings() {{
+                offset_x = -2;
+                offset_y = 0;
+                texture_heights = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 5);
+                }}, new ValidatedInt(), new ValidatedInt());
+                texture_widths = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, 5);
+                }}, new ValidatedInt(), new ValidatedInt());
+                texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                    put(0, Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_overlay.png"));
+                }}, new ValidatedInt(), new ValidatedIdentifier());
+            }};
+        }};
+
+        show_icon = false; // par défaut pas d'icône par-dessus la barre lisse
+
+        iconTextureSettings = new IconTextureSettings() {{
+            offset_x = 0;
+            offset_y = 0;
+            texture_heights = new ValidatedMap<>(new HashMap<>() {{
+                put(0, 0);
+            }}, new ValidatedInt(), new ValidatedInt());
+            texture_widths = new ValidatedMap<>(new HashMap<>() {{
+                put(0, 0);
+            }}, new ValidatedInt(), new ValidatedInt());
+            texture_ids = new ValidatedMap<>(new HashMap<>() {{
+                // Laisse vide par défaut
+            }}, new ValidatedInt(), new ValidatedIdentifier());
+        }};
+
+        enable_smooth_animation = true;
+        animationSettings = new AnimationsSettings() {{
+            animation_interval = 1;
+            max_value_change_is_animated = false;
+        }};
+    }};
+
+    // Nombre pour l’absorption (par défaut: jaune doux)
+    public NumberSettings absorptionNumberSettings = new NumberSettings() {{
+        show_number = false;
+        show_max_value = false;
+        // champ existant "show_when_health_full" n’est pas utilisé par l’absorption
+        offset_x = 0;
+        offset_y = -34;
+        color = new ValidatedColor(255, 200, 0);
+    }};
 }

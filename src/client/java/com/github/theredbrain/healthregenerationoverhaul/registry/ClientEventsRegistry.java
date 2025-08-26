@@ -18,8 +18,9 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import java.util.ArrayList;
 
 public class ClientEventsRegistry {
+    // Health
 	private static final String RESOURCE_BAR_IDENTIFIER_STRING = HealthRegenerationOverhaul.MOD_ID + ":health";
-	private static final Identifier ICON_HEALTH_CONTAINER = Identifier.ofVanilla("hud/heart/container");
+    private static final Identifier ICON_HEALTH_CONTAINER = Identifier.ofVanilla("hud/heart/container");
 	private static final Identifier ICON_HEALTH_CONTAINER_HARDCORE = Identifier.ofVanilla("hud/heart/container_hardcore");
 	private static final Identifier ICON_HEALTH_FULL = Identifier.ofVanilla("hud/heart/full");
 	private static final Identifier ICON_HEALTH_HALF = Identifier.ofVanilla("hud/heart/half");
@@ -38,16 +39,27 @@ public class ClientEventsRegistry {
 	private static final Identifier ICON_HEALTH_FULL_FROZEN_HARDCORE = Identifier.ofVanilla("hud/heart/frozen_hardcore_full");
 	private static final Identifier ICON_HEALTH_HALF_FROZEN_HARDCORE = Identifier.ofVanilla("hud/heart/frozen_hardcore_half");
 
-	public static void initializeClientEvents() {
+    // Absorption
+    private static final String ABSORPTION_BAR_IDENTIFIER_STRING = HealthRegenerationOverhaul.MOD_ID + ":absorption";
+    private static final Identifier ICON_ABSORPTION_CONTAINER = Identifier.of("healthregenerationoverhaul", "hud/absorption/container");
+    private static final Identifier ICON_ABSORPTION_CONTAINER_HARDCORE = Identifier.of("healthregenerationoverhaul", "hud/absorption/container_hardcore");
+    private static final Identifier ICON_ABSORPTION_FULL = Identifier.of("healthregenerationoverhaul", "hud/absorption/full");
+    private static final Identifier ICON_ABSORPTION_HALF = Identifier.of("healthregenerationoverhaul", "hud/absorption/half");
+    private static double prevAbsorptionLevel = -1.0;
+
+    public static void initializeClientEvents() {
 		HudRenderCallback.EVENT.register((matrixStack, delta) -> {
 			MinecraftClient minecraftClient = MinecraftClient.getInstance();
 			PlayerEntity playerEntity = minecraftClient.player;
 			ClientConfig clientConfig = HealthRegenerationOverhaulClient.CLIENT_CONFIG;
 
-			if (playerEntity != null && !minecraftClient.options.hudHidden && clientConfig.enable_alternative_health_bar) {
+            if (playerEntity != null
+                    && !minecraftClient.options.hudHidden
+                    && (clientConfig.enable_alternative_health_bar || clientConfig.enable_alternative_absorption_bar)) {
 				double health = playerEntity.getHealth();
 				double maxHealth = playerEntity.getMaxHealth();
 				double unreservedHealth = MathHelper.ceil(((HealthRegeneratingEntity) playerEntity).healthregenerationoverhaul$getUnreservedHealth());
+                double absorption = playerEntity.getAbsorptionAmount();
 
 				if (!playerEntity.isCreative() && maxHealth > 0) {
 
@@ -203,6 +215,147 @@ public class ClientEventsRegistry {
 								clientConfig.numberSettings.color.toInt()
 						);
 					}
+                    if (clientConfig.enable_alternative_absorption_bar
+                            && (absorption > 0.0 || clientConfig.show_full_absorption_bar)) {
+                        double absorptionMaxForBar = maxHealth;
+
+                        if (prevAbsorptionLevel < 0.0) {
+                            prevAbsorptionLevel = absorption;
+                        }
+                        int deltaAbsorption = (int) Math.ceil(Math.max(0.0, absorption - prevAbsorptionLevel));
+                        prevAbsorptionLevel = absorption;
+
+                        if (clientConfig.absorption_bar_display == ResourceBarAPI.ResourceBarDisplay.ICON
+                                && (absorption < absorptionMaxForBar || clientConfig.show_full_absorption_bar)) {
+
+                            Identifier containerAbs;
+                            Identifier fullAbs;
+                            Identifier halfAbs;
+
+                            if (playerEntity.getWorld().getLevelProperties().isHardcore()) {
+                                containerAbs = ICON_ABSORPTION_CONTAINER_HARDCORE;
+                            } else {
+                                containerAbs = ICON_ABSORPTION_CONTAINER;
+                            }
+                            fullAbs = ICON_ABSORPTION_FULL;
+                            halfAbs = ICON_ABSORPTION_HALF;
+
+                            ResourceBarAPIClient.drawIconResourceBar(
+                                    minecraftClient,
+                                    matrixStack,
+                                    ABSORPTION_BAR_IDENTIFIER_STRING,
+                                    absorption,
+                                    absorptionMaxForBar,
+                                    containerAbs,
+                                    fullAbs,
+                                    halfAbs,
+                                    new ArrayList<>(),
+                                    new ArrayList<>(), // pas de "reserved" sur absorption
+                                    originPos.getLeft(),
+                                    originPos.getRight(),
+                                    clientConfig.absorptionIconSettings.offset_x.get(),
+                                    clientConfig.absorptionIconSettings.offset_y.get(),
+                                    clientConfig.absorption_fill_direction,
+                                    clientConfig.absorptionIconSettings.reverse_stack_direction.get(),
+                                    clientConfig.absorptionIconSettings.max_icon_amount_per_bar.get()
+                            );
+                        }
+                        else if (clientConfig.absorption_bar_display == ResourceBarAPI.ResourceBarDisplay.SMOOTH
+                                && (absorption < absorptionMaxForBar || clientConfig.show_full_absorption_bar)) {
+
+                            // Initialisation la 1ère fois
+                            if (prevAbsorptionLevel < 0.0) {
+                                prevAbsorptionLevel = absorption;
+                            }
+
+                            // Delta positif = portion à animer en "augmentation" (utilise la texture *_increase_*)
+                            int regeneratedAbsorption = (int)Math.ceil(Math.max(0.0, absorption - prevAbsorptionLevel));
+
+                            // IMPORTANT: mettre à jour le cache pour la prochaine frame
+                            prevAbsorptionLevel = absorption;
+
+                            ResourceBarAPIClient.drawSmoothResourceBar(
+                                    minecraftClient,
+                                    matrixStack,
+                                    ABSORPTION_BAR_IDENTIFIER_STRING,
+                                    new double[]{
+                                            -1, -1, 0, -91, -45, 5, 182, 5, 182, 5, 182, 5, 5, 0, 0
+                                    },
+                                    new Identifier[]{
+                                            Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_background.png"),
+                                            Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_decrease_animation.png"),
+                                            Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_increase_animation.png"),
+                                            Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_increase_value.png"),
+                                            Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress.png"),
+                                            Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_reserved.png"),
+                                            Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_overlay.png"),
+                                            null
+                                    },
+                                    absorption,                // current
+                                    absorptionMaxForBar,       // max (indexé sur la vie)
+                                    regeneratedAbsorption,     // <<< clé: delta positif pour l’animation d’augmentation
+                                    absorption,                // unreserved (pas de "reserved" réel pour l’absorption)
+                                    originPos.getLeft(),
+                                    originPos.getRight(),
+                                    clientConfig.absorptionSmoothSettings.positionSettings.offsets_x,
+                                    clientConfig.absorptionSmoothSettings.positionSettings.offsets_y,
+                                    0,
+                                    0,
+                                    clientConfig.absorption_fill_direction,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.backgroundTextureSettings.texture_heights,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.backgroundTextureSettings.texture_widths,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.backgroundTextureSettings.texture_ids,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.offset_x,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.offset_y,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.texture_heights,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.texture_widths,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.progress_decrease_animation_texture_ids,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.progress_increase_animation_texture_ids,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.progress_increase_value_texture_ids,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.progressTextureSettings.progress_texture_ids,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.reservedTextureSettings.offset_x,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.reservedTextureSettings.offset_y,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.reservedTextureSettings.texture_heights,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.reservedTextureSettings.texture_widths,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.reservedTextureSettings.texture_ids,
+                                    clientConfig.absorptionSmoothSettings.show_current_value_overlay,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.overlayTextureSettings.offset_x,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.overlayTextureSettings.offset_y,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.overlayTextureSettings.texture_heights,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.overlayTextureSettings.texture_widths,
+                                    clientConfig.absorptionSmoothSettings.textureSettings.overlayTextureSettings.texture_ids,
+                                    clientConfig.absorptionSmoothSettings.show_icon,
+                                    clientConfig.absorptionSmoothSettings.iconTextureSettings.offset_x,
+                                    clientConfig.absorptionSmoothSettings.iconTextureSettings.offset_y,
+                                    clientConfig.absorptionSmoothSettings.iconTextureSettings.texture_heights,
+                                    clientConfig.absorptionSmoothSettings.iconTextureSettings.texture_widths,
+                                    clientConfig.absorptionSmoothSettings.iconTextureSettings.texture_ids,
+                                    clientConfig.absorptionSmoothSettings.enable_smooth_animation,             // doit être true
+                                    clientConfig.absorptionSmoothSettings.animationSettings.animation_interval,
+                                    clientConfig.absorptionSmoothSettings.animationSettings.max_value_change_is_animated
+                            );
+                        }
+
+                        if (clientConfig.absorptionNumberSettings.show_number
+                                && (absorption < absorptionMaxForBar || clientConfig.show_full_absorption_bar)) {
+
+                            ResourceBarAPIClient.drawResourceNumber(
+                                    minecraftClient,
+                                    minecraftClient.textRenderer,
+                                    matrixStack,
+                                    ABSORPTION_BAR_IDENTIFIER_STRING,
+                                    absorption,
+                                    absorptionMaxForBar,
+                                    absorption, // non-réservé (tout absorption)
+                                    originPos.getLeft(),
+                                    originPos.getRight(),
+                                    clientConfig.absorptionNumberSettings.show_max_value,
+                                    clientConfig.absorptionNumberSettings.offset_x,
+                                    clientConfig.absorptionNumberSettings.offset_y,
+                                    clientConfig.absorptionNumberSettings.color.toInt()
+                            );
+                        }
+                    }
 				}
 			}
 		});
@@ -238,6 +391,36 @@ public class ClientEventsRegistry {
 								null
 						}
 				);
+                ResourceBarAPIClient.clearCache(
+                        ABSORPTION_BAR_IDENTIFIER_STRING,
+                        new double[]{
+                                -1,
+                                -1,
+                                0,
+                                -91,
+                                -45,
+                                5,
+                                182,
+                                5,
+                                182,
+                                5,
+                                182,
+                                5,
+                                5,
+                                0,
+                                0
+                        },
+                        new Identifier[]{
+                                Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_background.png"),
+                                Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_decrease_animation.png"),
+                                Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_increase_animation.png"),
+                                Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress_increase_value.png"),
+                                Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_progress.png"),
+                                Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_reserved.png"),
+                                Identifier.of("healthregenerationoverhaul", "textures/gui/sprites/hud/horizontal_absorption_overlay.png"),
+                                null
+                        }
+                );
 			}
 		});
 	}
